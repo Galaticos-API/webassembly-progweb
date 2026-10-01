@@ -137,9 +137,22 @@ function runAddDemo() {
 // ==============================================================================
 
 async function runFibonacciBenchmark() {
-  const n = parseInt(document.getElementById('fib-n').value, 10) || 38;
+  const inputEl = document.getElementById('fib-n');
+  const n = parseInt(inputEl.value, 10) || 38;
   const resultCard = document.getElementById('fib-benchmark-result');
   const btn = document.getElementById('btn-run-fib');
+
+  if (n > 44) {
+    resultCard.innerHTML = `
+      <div class="placeholder-box" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.4);">
+        <strong>Valor muito alto (N = ${n}):</strong><br>
+        O algoritmo implementado é o <em>Fibonacci recursivo puro</em> com complexidade exponencial <strong>O(2^N)</strong>.<br>
+        Para N = ${n}, são necessárias mais de <strong>44 trilhões de chamadas de função</strong>, o que levaria várias horas e travaria a aba do navegador.<br>
+        <span style="color: var(--text-muted); display: block; margin-top: 6px;">Por favor, utilize valores entre <strong>30 e 42</strong> para testes em tempo real.</span>
+      </div>
+    `;
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Processando...';

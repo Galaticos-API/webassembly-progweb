@@ -66,8 +66,11 @@
         </div>
 
         <div class="form-group">
-          <label for="fib-n">Valor de N</label>
-          <input type="number" id="fib-n" value="38" min="1" max="43">
+          <label for="fib-n">Valor de N (Recomendado: 30 a 42)</label>
+          <input type="number" id="fib-n" value="38" min="1" max="44">
+          <small style="color: var(--text-dim); display: block; margin-top: 4px;">
+            Atenção: A recursão ingênua O(2^n) duplica o tempo a cada incremento. Valores acima de 44 travam o navegador devido a trilhões de chamadas recursivas.
+          </small>
         </div>
 
         <button id="btn-run-fib" class="btn btn-primary wasm-btn" disabled>
