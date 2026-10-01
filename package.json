@@ -1,0 +1,13 @@
+{
+  "name": "webassembly-progweb-demo",
+  "version": "1.0.0",
+  "description": "Exemplo didático e interativo de WebAssembly para aula de Programação Web",
+  "type": "module",
+  "scripts": {
+    "build:wasm": "node build.js",
+    "start": "npx serve ."
+  },
+  "devDependencies": {
+    "wabt": "^1.0.36"
+  }
+}

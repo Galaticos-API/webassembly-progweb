@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo WebAssembly - Programação Web</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    
+    <header class="header">
+      <div>
+        <h1 class="header-title">WebAssembly (Wasm) no Navegador</h1>
+        <p class="header-subtitle">
+          Demonstração de integração com JavaScript, benchmarks de execução e compartilhamento de memória linear.
+        </p>
+      </div>
+
+      <div id="wasm-status" class="status-badge">
+        <span class="status-indicator"></span>
+        <span>Carregando módulo Wasm...</span>
+      </div>
+    </header>
+
+    <div class="grid-2">
+      
+      <!-- 1. Operação Básica -->
+      <section class="card">
+        <div class="card-header">
+          <h2>1. Operação Básica</h2>
+          <p>Passagem de parâmetros inteiros (i32) e retorno direto da função exportada.</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="add-a">Parâmetro A</label>
+            <input type="number" id="add-a" value="15">
+          </div>
+          <div class="form-group">
+            <label for="add-b">Parâmetro B</label>
+            <input type="number" id="add-b" value="27">
+          </div>
+        </div>
+
+        <button id="btn-add" class="btn btn-primary wasm-btn" disabled>
+          Executar add(a, b)
+        </button>
+
+        <div id="add-result">
+          <div class="result-box">
+            <span class="result-number">42</span>
+            <div class="result-meta">
+              <code>wasmExports.add(15, 27)</code> &rarr; <strong>42</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Benchmark: Fibonacci -->
+      <section class="card">
+        <div class="card-header">
+          <h2>2. Benchmark: Fibonacci Recursivo</h2>
+          <p>Cálculo de Fibonacci recursivo (complexidade O(2^n)) comparando JS e Wasm.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="fib-n">Valor de N</label>
+          <input type="number" id="fib-n" value="38" min="1" max="43">
+        </div>
+
+        <button id="btn-run-fib" class="btn btn-primary wasm-btn" disabled>
+          Executar Teste de Fibonacci
+        </button>
+
+        <div id="fib-benchmark-result">
+          <div class="placeholder-box">
+            Clique no botão acima para iniciar a medição.
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="grid-2">
+
+      <!-- 3. Benchmark: Primos -->
+      <section class="card">
+        <div class="card-header">
+          <h2>3. Benchmark: Contagem de Números Primos</h2>
+          <p>Laço de repetição com testes de divisibilidade em inteiros.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="primes-limit">Limite Superior</label>
+          <input type="number" id="primes-limit" value="200000" step="50000">
+        </div>
+
+        <button id="btn-run-primes" class="btn btn-primary wasm-btn" disabled>
+          Executar Teste de Primos
+        </button>
+
+        <div id="primes-benchmark-result">
+          <div class="placeholder-box">
+            Clique no botão acima para iniciar a medição.
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Manipulação de Imagem em Canvas -->
+      <section class="card">
+        <div class="card-header">
+          <h2>4. Memória Linear e Canvas (Shared Memory)</h2>
+          <p>O WebAssembly processa os bytes do buffer RGBA diretamente na memória compartilhada.</p>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="demo-canvas"></canvas>
+          <div id="memory-meta-info" class="meta-info">
+            Buffer: 345.600 bytes (10 páginas de 64 KB alocadas no Wasm)
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-filter-gray-wasm" class="btn btn-primary wasm-btn" disabled>
+            Escala de Cinza (Wasm)
+          </button>
+          <button id="btn-filter-invert-wasm" class="btn btn-primary wasm-btn" disabled>
+            Inverter Cores (Wasm)
+          </button>
+          <button id="btn-reset-canvas" class="btn btn-secondary">
+            Restaurar
+          </button>
+        </div>
+
+        <div class="btn-group secondary-actions">
+          <button id="btn-filter-gray-js" class="btn btn-ghost wasm-btn" disabled>
+            Cinza (via JS)
+          </button>
+          <button id="btn-filter-invert-js" class="btn btn-ghost wasm-btn" disabled>
+            Inverter (via JS)
+          </button>
+        </div>
+
+        <div id="canvas-filter-stats" class="status-text">
+          Aguardando ação.
+        </div>
+      </section>
+
+    </div>
+
+    <!-- CÓDIGO FONTE E EXPLICAÇÃO -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button class="tab-btn active" data-tab="js">JavaScript (main.js)</button>
+        <button class="tab-btn" data-tab="wat">WebAssembly Text (math.wat)</button>
+        <button class="tab-btn" data-tab="c">Código Equivalente em C (math.c)</button>
+        <button class="tab-btn" data-tab="resumo">Conceitos e Funcionamento</button>
+      </div>
+
+      <div id="tab-js" class="tab-pane active">
+        <pre><code>// 1. Carregamento do binário via Streaming
+const response = await fetch('math.wasm');
+const { instance } = await WebAssembly.instantiateStreaming(response);
+
+// 2. Extração das funções exportadas
+const { add, fibonacci, isPrime, countPrimes, memory, applyGrayscale } = instance.exports;
+
+// 3. Chamada direta de função
+const soma = add(15, 27); // 42
+
+// 4. Compartilhamento de memória com Canvas
+const buffer = new Uint8Array(memory.buffer);
+buffer.set(imageData.data, 0); // copia bytes RGBA para o offset 0
+
+applyGrayscale(0, imageData.data.length); // altera in-place no Wasm
+
+const resultado = new Uint8ClampedArray(memory.buffer, 0, imageData.data.length);
+ctx.putImageData(new ImageData(resultado, width, height), 0, 0);</code></pre>
+      </div>
+
+      <div id="tab-wat" class="tab-pane">
+        <pre><code>(module
+  ;; Aloca e exporta 10 páginas de 64 KB (640 KB total)
+  (memory (export "memory") 10)
+
+  ;; Função soma: recebe 2 inteiros de 32 bits e retorna a soma
+  (func $add (export "add") (param $a i32) (param $b i32) (result i32)
+    local.get $a
+    local.get $b
+    i32.add
+  )
+
+  ;; Fibonacci recursivo
+  (func $fibonacci (export "fibonacci") (param $n i32) (result i32)
+    local.get $n
+    i32.const 2
+    i32.lt_s
+    if (result i32)
+      local.get $n
+    else
+      local.get $n
+      i32.const 1
+      i32.sub
+      call $fibonacci
+      local.get $n
+      i32.const 2
+      i32.sub
+      call $fibonacci
+      i32.add
+    end
+  )
+)</code></pre>
+      </div>
+
+      <div id="tab-c" class="tab-pane">
+        <pre><code>#define EMSCRIPTEN_KEEPALIVE __attribute__((used))
+
+EMSCRIPTEN_KEEPALIVE
+int add(int a, int b) {
+    return a + b;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int fibonacci(int n) {
+    if (n < 2) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void applyGrayscale(unsigned char* pixels, int length) {
+    for (int i = 0; i < length; i += 4) {
+        unsigned char r = pixels[i];
+        unsigned char g = pixels[i + 1];
+        unsigned char b = pixels[i + 2];
+        unsigned char gray = (unsigned char)((r * 299 + g * 587 + b * 114) / 1000);
+        pixels[i] = gray;
+        pixels[i + 1] = gray;
+        pixels[i + 2] = gray;
+    }
+}</code></pre>
+      </div>
+
+      <div id="tab-resumo" class="tab-pane">
+        <div class="info-grid">
+          <div class="info-item">
+            <h3>Estrutura em Pilha</h3>
+            <p>O WebAssembly opera sobre uma máquina de pilha (stack machine). Instruções como <code>local.get</code> empilham valores e instruções como <code>i32.add</code> desempilham os operandos e empilham o resultado.</p>
+          </div>
+          <div class="info-item">
+            <h3>Memória Linear</h3>
+            <p>A memória do Wasm é um vetor contíguo de bytes não tipados exposto ao JavaScript através de um <code>ArrayBuffer</code>. Isso permite que C/Rust use ponteiros normalmente.</p>
+          </div>
+          <div class="info-item">
+            <h3>Segurança e Sandbox</h3>
+            <p>O código Wasm roda dentro do mesmo modelo de segurança restrito do JavaScript no navegador, sem acesso direto a arquivos locais ou chamadas de sistema não autorizadas.</p>
+          </div>
+          <div class="info-item">
+            <h3>Casos de Uso na Web</h3>
+            <p>Recomendado para jogos, compressão/descompressão de dados, processamento de vídeo/áudio, edição de imagem, bibliotecas de física e criptografia.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>Material de demonstração para a disciplina de Programação Web.</p>
+    </footer>
+
+  </div>
+
+  <script src="wasm-base64.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
